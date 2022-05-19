@@ -3,20 +3,23 @@ import codecs
 import sys
 import pandas
 import numpy as np
-from wordcloud import WordCloud
 import imageio
+import base64
+from io import BytesIO
+from PIL import Image
 from wordcloud import WordCloud, ImageColorGenerator
 from os import listdir
 from os.path import isfile, join
 
 stopwords_filename = 'data/stopwords.txt'
-font_filename = 'fonts/STFangSong.ttf'
+font_filename = 'fonts/msyh.ttc'
 template_dir = 'data/templates/'
+background_picture_filename = template_dir + "/image3.png"
 
 
-def main(input_filename):
+def render(segment_list):
     content = '\n'.join([line.strip()
-                         for line in codecs.open(input_filename, 'r', 'utf-8')
+                         for line in segment_list
                          if len(line.strip()) > 0])
     stopwords = set([line.strip()
                      for line in codecs.open(stopwords_filename, 'r', 'utf-8')])
@@ -36,34 +39,23 @@ def main(input_filename):
 
     print('# of different words =', len(words_stat))
 
-    input_prefix = input_filename
-    if input_filename.find('.') != -1:
-        input_prefix = '.'.join(input_filename.split('.')[:-1])
+    if isfile(background_picture_filename):
+        bimg = imageio.imread(background_picture_filename)
+        wordcloud = WordCloud(font_path=font_filename, background_color="white",
+                              mask=bimg, max_font_size=600, random_state=100,
+                              contour_width=0,  # (float)mask轮廓线宽。若mask不为空且此项值大于0，就绘制出mask轮廓 (default=0)
+                              contour_color='black',  # (color value) Mask轮廓颜色，默认黑色
+                              )
+        wordcloud = wordcloud.fit_words(
+            dict(words_stat.head(100).itertuples(index=False)))
 
-    for file in listdir(template_dir):
-        if file[-4:] != '.png' and file[-4:] != '.jpg':
-            continue
-        background_picture_filename = join(template_dir, file)
-        if isfile(background_picture_filename):
-            prefix = file.split('.')[0]
+        backgroundingColors = ImageColorGenerator(bimg)
+        wordcloud.recolor(color_func=backgroundingColors)
 
-            bimg = imageio.imread(background_picture_filename)
-            wordcloud = WordCloud(font_path=font_filename, background_color='white',
-                                  mask=bimg, max_font_size=600, random_state=100)
-            wordcloud = wordcloud.fit_words(
-                dict(words_stat.head(100).itertuples(index=False)))
+        image: Image = wordcloud.to_image()
 
-            bimgColors = ImageColorGenerator(bimg)
-            wordcloud.recolor(color_func=bimgColors)
-
-            output_filename = prefix + '_' + input_prefix + '.png'
-
-            print('Saving', output_filename)
-            wordcloud.to_file(output_filename)
-
-
-if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        main(sys.argv[1])
-    else:
-        print('[usage] <input>')
+        output_buffer = BytesIO()
+        image.save(output_buffer, format='PNG')
+        byte_data = output_buffer.getvalue()
+        base64_str = base64.b64encode(byte_data)
+        return base64_str.decode('utf-8')

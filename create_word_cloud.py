@@ -75,7 +75,7 @@ def render(segment_list):
                               contour_color='black',  # (color value) Mask轮廓颜色，默认黑色
                               )
         wordcloud = wordcloud.fit_words(
-            dict(words_stat.head(100).itertuples(index=False)))
+            dict(words_stat.head(200).itertuples(index=False)))
 
         backgroundingColors = ImageColorGenerator(bimg)
         wordcloud.recolor(color_func=backgroundingColors)

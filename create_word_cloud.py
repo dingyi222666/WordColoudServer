@@ -7,6 +7,8 @@ import imageio
 import base64
 from io import BytesIO
 from PIL import Image
+from jieba import posseg
+from random import choice, shuffle
 from wordcloud import WordCloud, ImageColorGenerator
 from os import listdir
 from os.path import isfile, join
@@ -17,7 +19,33 @@ template_dir = 'data/templates/'
 background_picture_filename = template_dir + "/image3.png"
 
 
+def posseg_lcut(segment):
+    try:
+        jieba.enable_parallel()
+    except BaseException:
+        pass
+    keywords = posseg.lcut(segment)
+    print(keywords)
+    shuffle(keywords)
+    result = []
+    for i in keywords:
+        a = i.word
+        b = list(a)
+        try:
+            if b[0] == b[1]:
+                a = b[0]
+        except BaseException:
+            pass
+        result.append(a)
+
+    return result
+
+
 def render(segment_list):
+    try:
+        jieba.enable_parallel()
+    except BaseException:
+        pass
     content = '\n'.join([line.strip()
                          for line in segment_list
                          if len(line.strip()) > 0])

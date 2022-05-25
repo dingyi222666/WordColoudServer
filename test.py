@@ -29,14 +29,19 @@ async def read_file(file_path):
 
 async def main():
     async with aiohttp.ClientSession() as session:
-        json_base64 = await fetch(session, "http://localhost:8080/generate_word_cloud", {
-            "segment": await read_file("data/data.json")
+        # json_base64 = await fetch(session, "http://localhost:8080/generate_word_cloud", {
+        #     "segment": await read_file("data/data.json")
+        # })
+        # print(json_base64)
+        # base64str = json.loads(json_base64)['result']
+        # print(base64str)
+        # img = base64_to_pil(base64str)
+        # show_pil_image(img)
+        words = await fetch(session, "http://localhost:8080/posseg_lcut", {
+            "segment": "摸摸"
         })
-        print(json_base64)
-        base64str = json.loads(json_base64)['result']
-        print(base64str)
-        img = base64_to_pil(base64str)
-        show_pil_image(img)
+        print(words)
+        print(json.loads(words))
         await session.close()
 
 
